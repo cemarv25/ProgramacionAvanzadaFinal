@@ -77,14 +77,6 @@ int main(int argc, char const *argv[])
     fileLen = ftell(pdf_fd);
     fseek(pdf_fd, 0, SEEK_SET);
 
-    // //Allocate memory
-    // char *pdfBuffer = (char *)malloc(fileLen + 1);
-    // if (!pdfBuffer)
-    // {
-    //     fprintf(stderr, "Memory error!");
-    //     fclose(pdf_fd);
-    //     exit(EXIT_FAILURE);
-    // }
     int totalSent = 0;
     int sent;
     do
@@ -100,14 +92,6 @@ int main(int argc, char const *argv[])
 
     fclose(pdf_fd);
     printf("Response sent\n");
-
-    // //Read file contents into buffer
-    // fread(pdfBuffer, fileLen, 1, pdf_fd);
-    // printf("Buffer \n%s\n\n", pdfBuffer);
-    // //free(buffer);
-
-    // // Send the file as response
-    // send(server_fd, pdfBuffer, fileLen, 0);
 
     return 0;
 }
