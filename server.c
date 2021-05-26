@@ -76,26 +76,38 @@ int main(int argc, char const *argv[])
     fseek(pdf_fd, 0, SEEK_END);
     fileLen = ftell(pdf_fd);
     fseek(pdf_fd, 0, SEEK_SET);
-    printf("File length: %d\n", fileLen);
 
-    //Allocate memory
-    char *pdfBuffer = (char *)malloc(fileLen + 1);
-    if (!pdfBuffer)
+    // //Allocate memory
+    // char *pdfBuffer = (char *)malloc(fileLen + 1);
+    // if (!pdfBuffer)
+    // {
+    //     fprintf(stderr, "Memory error!");
+    //     fclose(pdf_fd);
+    //     exit(EXIT_FAILURE);
+    // }
+    int totalSent = 0;
+    int sent;
+    do
     {
-        fprintf(stderr, "Memory error!");
-        fclose(pdf_fd);
-        exit(EXIT_FAILURE);
-    }
+        fread(buffer, 1, 1024, pdf_fd);
+        sent = send(new_socket, buffer, 1024, 0);
+        if (sent < 0)
+            exit(EXIT_FAILURE);
+        if (sent == 0)
+            break;
+        totalSent += sent;
+    } while (totalSent < fileLen);
 
-    //Read file contents into buffer
-    fread(pdfBuffer, fileLen, 1, pdf_fd);
     fclose(pdf_fd);
-    printf("Buffer \n%s\n\n", pdfBuffer);
-    //free(buffer);
-
-    // Send the file as response
-    send(server_fd, pdfBuffer, fileLen, 0);
-
     printf("Response sent\n");
+
+    // //Read file contents into buffer
+    // fread(pdfBuffer, fileLen, 1, pdf_fd);
+    // printf("Buffer \n%s\n\n", pdfBuffer);
+    // //free(buffer);
+
+    // // Send the file as response
+    // send(server_fd, pdfBuffer, fileLen, 0);
+
     return 0;
 }
