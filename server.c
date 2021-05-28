@@ -44,7 +44,7 @@ int create_socket(int opt, struct sockaddr_in address)
 
 void server_listen(int server_fd)
 {
-    if (listen(server_fd, 3) < 0)
+    if (listen(server_fd, 100) < 0)
     {
         perror("listen");
         exit(EXIT_FAILURE);
@@ -123,27 +123,33 @@ int start_server()
 
     server_listen(server_fd);
 
-    new_socket = await_connection(server_fd, address, addrlen);
+    while (1)
+    {
+        new_socket = await_connection(server_fd, address, addrlen);
 
-    printf("Connected\n\n");
-    printf("Request received: \n");
-    printf("%s\n", buffer);
+        printf("Connected\n\n");
+        printf("Request received: \n");
+        printf("%s\nEnd of request\n", buffer);
 
-    // Send response headers
-    send(new_socket, res, strlen(res), 0);
+        // Send response headers
+        send(new_socket, res, strlen(res), 0);
 
-    printf("Sending file 'Syllabus.pdf'...\n");
-    // Open the file
-    FILE *pdf_fd = open_file("Syllabus.pdf");
+        printf("Sending file 'Syllabus.pdf'...\n");
+        // Open the file
+        FILE *pdf_fd = open_file("Syllabus.pdf");
 
-    // Get file length
-    int file_len = get_file_len(pdf_fd);
+        // Get file length
+        int file_len = get_file_len(pdf_fd);
 
-    // Send file
-    send_file(pdf_fd, new_socket, file_len);
+        // Send file
+        send_file(pdf_fd, new_socket, file_len);
 
-    fclose(pdf_fd);
-    printf("File sent\n");
+        fclose(pdf_fd);
+        printf("File sent\n");
+
+        printf("Closing socket...\n\n");
+        close(new_socket);
+    }
 
     return 0;
 }
