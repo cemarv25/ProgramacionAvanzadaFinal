@@ -52,27 +52,6 @@ void server_listen(int server_fd)
     }
 }
 
-char *get_route(char *req)
-{
-    char req_no_space[100] = {0};
-
-    // Substring from the 5th character (/)
-    strncpy(req_no_space, req + 5, 50);
-
-    char *ptr;
-    int index;
-    char route;
-    ptr = strchr(req_no_space, ' ');
-    index = (int)(ptr - req_no_space);
-
-    strncpy(&route, req_no_space, index + 1);
-    printf("route inside get_route: %s\n", &route);
-
-    char *good_route = &route;
-
-    return good_route;
-}
-
 int await_connection(int server_fd, struct sockaddr_in address, int addrlen)
 {
     int new_socket;
@@ -86,6 +65,7 @@ int await_connection(int server_fd, struct sockaddr_in address, int addrlen)
     read(new_socket, buffer, 1024);
 
     char req_no_space[100] = {0};
+    strncpy(&route, req_no_space, strlen(&route));
 
     // Substring from the 5th character (/)
     strncpy(req_no_space, buffer + 5, 50);
@@ -95,7 +75,7 @@ int await_connection(int server_fd, struct sockaddr_in address, int addrlen)
     ptr = strchr(req_no_space, ' ');
     index = (int)(ptr - req_no_space);
 
-    strncpy(&route, req_no_space, index + 1);
+    strncpy(&route, req_no_space, index);
     printf("route inside await: %s\n", &route);
 
     return new_socket;
@@ -152,6 +132,7 @@ int start_server()
 
     // Response headers
     char *res = "HTTP/1.1 200 OK\r\nContent-Type:application/pdf\r\nConnection:Closed\r\n\r\n";
+    char *res404 = "HTTP/1.1 200 OK\r\nContent-Type:text/html\r\nConnection:Closed\r\n\r\n";
 
     server_fd = create_socket(opt, address);
 
@@ -161,28 +142,48 @@ int start_server()
     {
         new_socket = await_connection(server_fd, address, addrlen);
 
-        printf("Connected\n\n");
-        printf("Request received: \n");
-        printf("%s\nEnd of request\n", buffer);
+        if (!strcmp(&route, "syllabus"))
+        {
+            // Send response headers
+            send(new_socket, res, strlen(res), 0);
 
-        // Send response headers
-        send(new_socket, res, strlen(res), 0);
+            printf("Sending file 'Syllabus.pdf'...\n");
+            // Open the file
+            FILE *pdf_fd = open_file("Syllabus.pdf");
 
-        printf("Sending file 'Syllabus.pdf'...\n");
-        // Open the file
-        FILE *pdf_fd = open_file("Syllabus.pdf");
+            // Get file length
+            int file_len = get_file_len(pdf_fd);
 
-        // Get file length
-        int file_len = get_file_len(pdf_fd);
+            // Send file
+            send_file(pdf_fd, new_socket, file_len);
 
-        // Send file
-        send_file(pdf_fd, new_socket, file_len);
+            fclose(pdf_fd);
+            printf("File sent\n");
 
-        fclose(pdf_fd);
-        printf("File sent\n");
+            printf("Closing socket...\n\n");
+            close(new_socket);
+        }
+        else if (!strcmp(&route, ""))
+        {
+            send(new_socket, res404, strlen(res404), 0);
+            send(new_socket, "<html><body>Searching for /syllabus ?</body></html>", 41, 0);
+            close(new_socket);
+        }
+        else if (!strcmp(&route, "favicon.ico"))
+        {
+            continue;
+        }
+        else
+        {
+            // Send response headers
+            send(new_socket, res404, strlen(res404), 0);
+            send(new_socket, "<html><body>404 Not found.</body></html>", 41, 0);
+            close(new_socket);
+        }
 
-        printf("Closing socket...\n\n");
-        close(new_socket);
+        // printf("Connected\n\n");
+        // printf("Request received: \n");
+        // printf("%s\nEnd of request\n", buffer);
     }
 
     return 0;
