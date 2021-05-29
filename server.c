@@ -9,6 +9,7 @@
 #define PORT 8080
 
 char buffer[1024] = {0};
+char route;
 
 int create_socket(int opt, struct sockaddr_in address)
 {
@@ -51,6 +52,27 @@ void server_listen(int server_fd)
     }
 }
 
+char *get_route(char *req)
+{
+    char req_no_space[100] = {0};
+
+    // Substring from the 5th character (/)
+    strncpy(req_no_space, req + 5, 50);
+
+    char *ptr;
+    int index;
+    char route;
+    ptr = strchr(req_no_space, ' ');
+    index = (int)(ptr - req_no_space);
+
+    strncpy(&route, req_no_space, index + 1);
+    printf("route inside get_route: %s\n", &route);
+
+    char *good_route = &route;
+
+    return good_route;
+}
+
 int await_connection(int server_fd, struct sockaddr_in address, int addrlen)
 {
     int new_socket;
@@ -61,8 +83,20 @@ int await_connection(int server_fd, struct sockaddr_in address, int addrlen)
         perror("accept");
         exit(EXIT_FAILURE);
     }
-
     read(new_socket, buffer, 1024);
+
+    char req_no_space[100] = {0};
+
+    // Substring from the 5th character (/)
+    strncpy(req_no_space, buffer + 5, 50);
+
+    char *ptr;
+    int index;
+    ptr = strchr(req_no_space, ' ');
+    index = (int)(ptr - req_no_space);
+
+    strncpy(&route, req_no_space, index + 1);
+    printf("route inside await: %s\n", &route);
 
     return new_socket;
 }
